@@ -1,6 +1,23 @@
-var conn = require('../config/database');
+var conn = require('../config/database');  //call database connection
 
 /*------Users Tables------*/
+/*---Activate User---*/
+exports.verifyCredentials = function(username,password,callback) {
+	var query = "SELECT * FROM js_users WHERE username = ? AND password = ?";
+
+	//get a connection from the pool
+	conn.getConnection(function(err, connection) {
+		if(err) { console.log(err); callback(true); return; }
+		// make the query
+		connection.query(query, [username,password], function(err, results) {
+			connection.release();
+			if(err) { console.log(err); callback(true); return; }
+			callback(false, results);
+		});
+	});
+};
+/*---End Activate User---*/
+
 /*---Activate User---*/
 exports.getAll = function(userid, callback) {
 	var query = "SELECT * FROM js_users WHERE userid != ?";
