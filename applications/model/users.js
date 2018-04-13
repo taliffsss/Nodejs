@@ -2,16 +2,24 @@ var conn = require('../config/database');  //call database connection
 
 /*------Users Tables------*/
 /*---Activate User---*/
-exports.verifyCredentials = function(username,password,callback) {
-	var query = "SELECT * FROM js_users WHERE username = ? AND password = ?";
+exports.verifyCredentials = function(username,callback) {
+	var query = "SELECT * FROM js_users WHERE username = ?";
 
 	//get a connection from the pool
 	conn.getConnection(function(err, connection) {
-		if(err) { console.log(err); callback(true); return; }
+		if(err) {
+			console.log(err);
+			callback(false);
+			return;
+		}
 		// make the query
-		connection.query(query, [username,password], function(err, results) {
+		connection.query(query, [username], function(err, results) {
 			connection.release();
-			if(err) { console.log(err); callback(true); return; }
+			if(err) {
+				console.log(err);
+				callback(false);
+				return;
+			}
 			callback(false, results);
 		});
 	});
@@ -36,14 +44,14 @@ exports.getAll = function(userid, callback) {
 /*---End Activate User---*/
 
 /*---Insert data---*/
-exports.InsertUsers = function(username,password,oldpass,role,fullname,email,validCode,created_at, callback) {
+exports.InsertUsers = function(uname,hash,hash,role,fullname,email,validCode,created_at, callback) {
 	var query = "INSERT INTO js_users (username,password,oldpass,role,fullname,email,validCode,created_at) VALUE(?,?,?,?,?,?,?,?)";
 
 	//get a connection from the pool
 	conn.getConnection(function(err, connection) {
 		if(err) { console.log(err); callback(true); return; }
 		// make the query
-		connection.query(query, [username,password,oldpass,role,fullname,email,validCode,created_at,], function(err, results) {
+		connection.query(query, [uname,hash,hash,role,fullname,email,validCode,created_at,], function(err, results) {
 			connection.release();
 			if(err) { console.log(err); callback(true); return; }
 			callback(false, results);
