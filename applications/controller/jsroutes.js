@@ -61,20 +61,32 @@ module.exports = function(app) {
 				else{
 					if(rows.length) {
 						if(passhash.passwordVerify(password,rows[0].password)) {
-							sess.id = rows[0].userid;
-							sess.username = rows[0].username;
-							sess.email = rows[0].fullname;
-							sess.name = rows[0].email;
-							sess.loggedin = true;
-							res.redirect('/success');
+
+							if(rows[0].activated != 0) {
+								if(rows[0].suspended != 0) {
+									sess.id = rows[0].userid;
+									sess.username = rows[0].username;
+									sess.email = rows[0].fullname;
+									sess.name = rows[0].email;
+									sess.loggedin = true;
+									res.redirect('/success');
+								} else {
+									req.flash('suspended','Your Account is Temporarily suspended');
+									res.render('login',{ message: req.flash('suspended'), uname: username });
+								}
+							} else {
+								req.flash('notActive','Your Account is not yet Activated');
+								res.render('login',{ message: req.flash('notActive'), uname: username });
+							}
+								
 						} else {
 
-							req.flash('credentials','Oops! Wrong Password.')
+							req.flash('credentials','Oops! Wrong Password.');
 							res.render('login',{ message: req.flash('credentials'), uname: username });
 						}
 						
 					} else {
-						req.flash('credentials','Oops! Wrong Username.')
+						req.flash('credentials','Oops! Wrong Username.');
 						res.render('login',{ message: req.flash('credentials'), uname: username });
 					}
 				}
@@ -137,18 +149,46 @@ module.exports = function(app) {
 
 	/*------Dashboard module------*/
 	app.get('/dashboard', function (req, res) {
-		res.render('signup')
+		res.render('signup');
 	})
 
 	/*---End---*/
 
 	/*------Users module------*/
-	app.post('/users/new', function (req, res) {
-		
+	app.post('/users/new',formparser, function (req, res) {
+
+		sess = req.session;
+
+		if(req.method == "POST"){
+			var uname = req.body.username;
+			var pass = req.body.password;
+			var fullname = req.body.fullname;
+			var email = req.body.email;
+			var role = req.body.role;
+			var validCode = gen;
+			var created_at = dt;
+
+			var hash = passhash.passwordHash(pass);
+
+			users.InsertUsers(uname,hash,hash,role,fullname,email,validCode,created_at, function(err, rows){
+				if(err) throw err;
+
+				else{
+					if(rows.affectedRows > 0) {
+						/*req.flash('success','Successfully Added')
+						res.redirect('/users/list',{ message: req.flash('success')});*/
+						res.render('404');
+					} else {
+						req.flash('error','Oops! Error occured')
+						res.render('login',{ message: req.flash('error') });
+					}
+				}
+			});
+		}
 	})
 
 	app.get('/users/list', function (req, res) {
-		res.render('user-list')
+		res.render('user-list');
 	})
 
 	app.get('/users/activate/:id', function (req, res) {
@@ -156,7 +196,9 @@ module.exports = function(app) {
 	})
 
 	app.get('/users/deactivate/:id', function (req, res) {
-		res.render('user-list')
+
+		
+		res.render('user-list');
 	})
 
 	app.get('/users/remove/:id', function (req, res) {
